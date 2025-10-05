@@ -15,23 +15,21 @@ import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
 import { useToast } from '@/hooks/use-toast';
 
-// Importações Atualizadas
 import { triggerAnalysis } from '@/services/analysisService';
-import { AnalysisPopup } from '@/components/analysis-popup'; // Importa o novo popup
+import { AnalysisPopup } from '@/components/analysis-popup'; 
 import type { Location } from '@/types';
 
 import { Map as MapIcon, Save, Trash2, Loader2, MapPin, Layers, BrainCircuit } from 'lucide-react';
 
 type PlaceResult = google.maps.places.PlaceResult;
 type LatLngLiteral = google.maps.LatLngLiteral;
-type LayerType = 'temperature' | 'air_quality' | 'precipitation' | 'land_use' | 'human_activity';
+type LayerType = 'temperature' | 'air_quality' | 'land_use' | 'human_activity';
 
-// A lista de indicadores agora fica no frontend para ser enviada para a API
 const INDICATORS_LIST = [
-    { id: 'temperature', name: 'Temperatura' }, 
-    { id: 'air_quality', name: 'Qualidade do Ar' }, 
-    { id: 'land_use', name: 'Uso do Solo' }, 
-    { id: 'human_activity', name: 'Atividade Humana' }
+    { id: 'temperature', name: 'Temperature' }, 
+    { id: 'air_quality', name: 'Air Quality' }, 
+    { id: 'land_use', name: 'Land Use' }, 
+    { id: 'human_activity', name: 'Human Activity' }
 ];
 
 export default function GeoSearchPage() {
@@ -42,9 +40,9 @@ export default function GeoSearchPage() {
       <div className="flex h-screen w-full items-center justify-center bg-background text-foreground">
         <Card className="max-w-md">
           <CardHeader>
-            <CardTitle>Erro de Configuração</CardTitle>
+            <CardTitle>Configuration Error</CardTitle>
             <CardDescription>
-              A chave da API do Google Maps está em falta. Adicione-a às suas variáveis de ambiente como NEXT_PUBLIC_GOOGLE_MAPS_API_KEY.
+              The Google Maps API key is missing. Please add it to your environment variables as NEXT_PUBLIC_GOOGLE_MAPS_API_KEY.
             </CardDescription>
           </CardHeader>
         </Card>
@@ -63,14 +61,13 @@ function GeoSearchContent() {
   const [locations, setLocations] = useState<Location[]>([]);
   const [selectedPlace, setSelectedPlace] = useState<PlaceResult | null>(null);
   const [selectedLocation, setSelectedLocation] = useState<Location | null>(null);
-  const [position, setPosition] = useState<LatLngLiteral>({ lat: -23.5505, lng: -46.6333 }); // Padrão para São Paulo
+  const [position, setPosition] = useState<LatLngLiteral>({ lat: 40.749933, lng: -73.98633 });
   const [zoom, setZoom] = useState(10);
   const [eeTileUrl, setEeTileUrl] = useState<string | null>(null);
   const [isEeLoading, setIsEeLoading] = useState(false);
   const [layerOpacity, setLayerOpacity] = useState(0.6);
   const [isAnalysisLoading, setIsAnalysisLoading] = useState(false);
 
-  // Novos estados para o popup
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [analysisResult, setAnalysisResult] = useState('');
   const [currentAnalysisLocation, setCurrentAnalysisLocation] = useState('');
@@ -107,20 +104,20 @@ function GeoSearchContent() {
 
     const locationData: Location = {
       id: Date.now().toString(),
-      name: selectedPlace.name || 'Local sem nome',
+      name: selectedPlace.name || 'Unnamed Location',
       address: selectedPlace.formatted_address || '',
       lat: selectedPlace.geometry.location.lat(),
       lng: selectedPlace.geometry.location.lng(),
     };
 
-    toast({ title: "Localização Salva!", description: `${locationData.name} foi salva.` });
+    toast({ title: "Location Saved!", description: `${locationData.name} has been saved.` });
     setLocations(prev => [locationData, ...prev]);
     setSelectedPlace(null);
     if (inputRef.current) inputRef.current.value = '';
   };
 
   const handleDelete = (id: string, name: string) => {
-    toast({ title: "Localização Apagada", description: `${name} foi removida.` });
+    toast({ title: "Location Deleted", description: `${name} has been removed.` });
     setLocations(prev => prev.filter(loc => loc.id !== id));
     if (selectedLocation?.id === id) {
       setSelectedLocation(null);
@@ -128,41 +125,39 @@ function GeoSearchContent() {
     }
   };
 
-  // Função de análise atualizada para chamar o Gemini e abrir o popup
   const handleAnalysis = useCallback(async () => {
     const address = inputRef.current?.value;
 
     if (!address) {
-        toast({ variant: 'destructive', title: "Endereço Faltando", description: "Por favor, digite ou selecione um endereço antes de gerar a análise." });
+        toast({ variant: 'destructive', title: "Address Missing", description: "Please enter or select an address before generating the analysis." });
         return;
     }
 
     setIsAnalysisLoading(true);
     setCurrentAnalysisLocation(address);
-    toast({ title: "Gerando Análise...", description: "A IA está processando o plano de urbanismo. Isso pode levar um momento." });
+    toast({ title: "Generating Analysis...", description: "The AI is processing the urban plan. This might take a moment." });
 
     try {
-        // A lista de indicadores agora é enviada no corpo da requisição
         const indicatorsForApi = INDICATORS_LIST.map(i => i.name);
         const result = await triggerAnalysis({ address, indicators: indicatorsForApi });
 
         if (result.success && result.analysis) {
             setAnalysisResult(result.analysis);
-            setIsPopupOpen(true); // Abre o popup com o resultado
+            setIsPopupOpen(true);
             toast({
-              title: "Análise Concluída!",
-              description: "O plano de urbanismo foi gerado com sucesso.",
+              title: "Analysis Complete!",
+              description: "The urban plan was generated successfully.",
             });
         } else {
-          throw new Error(result.message || 'A API retornou uma resposta inesperada.');
+          throw new Error(result.message || 'The API returned an unexpected response.');
         }
 
     } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : "Ocorreu um erro desconhecido";
+        const errorMessage = error instanceof Error ? error.message : "An unknown error occurred";
         toast({
             variant: 'destructive',
-            title: "Falha na Análise",
-            description: `Erro: ${errorMessage}`,
+            title: "Analysis Failed",
+            description: `Error: ${errorMessage}`,
         });
     } finally {
         setIsAnalysisLoading(false);
@@ -188,8 +183,8 @@ function GeoSearchContent() {
       setEeTileUrl(data.urlFormat);
     } catch (error) {
       console.error(error);
-      const errorMessage = error instanceof Error ? error.message : "Ocorreu um erro desconhecido";
-      toast({ variant: 'destructive', title: "Erro ao carregar a camada", description: errorMessage });
+      const errorMessage = error instanceof Error ? error.message : "An unknown error occurred";
+      toast({ variant: 'destructive', title: "Error loading layer", description: errorMessage });
       setEeTileUrl(null);
     } finally {
       setIsEeLoading(false);
@@ -213,8 +208,8 @@ function GeoSearchContent() {
               <div className="flex items-center gap-3">
                 <MapIcon className="h-8 w-8 text-primary" />
                 <div>
-                  <CardTitle className="text-2xl font-bold">GeoSearch IA</CardTitle>
-                  <CardDescription>Pesquise, analise e gere insights com IA.</CardDescription>
+                  <CardTitle className="text-2xl font-bold">Polis AI</CardTitle>
+                  <CardDescription>Search, analyze, and generate insights with AI.</CardDescription>
                 </div>
               </div>
             </CardHeader>
@@ -222,7 +217,7 @@ function GeoSearchContent() {
               <div className="space-y-2">
                 <PlaceAutocomplete onPlaceSelect={handlePlaceSelect} inputRef={inputRef} />
                 <Button onClick={handleSave} disabled={!selectedPlace} className="w-full">
-                  <Save className="mr-2 h-4 w-4" /> Salvar Localização
+                  <Save className="mr-2 h-4 w-4" /> Save Location
                 </Button>
                 <Button onClick={handleAnalysis} disabled={isAnalysisLoading} className="w-full bg-primary hover:bg-primary/90 text-primary-foreground">
                   {isAnalysisLoading ? (
@@ -230,7 +225,7 @@ function GeoSearchContent() {
                   ) : (
                     <BrainCircuit className="mr-2 h-4 w-4" />
                   )}
-                  Gerar Análise Urbanística com IA
+                  Generate Urban Analysis with AI
                 </Button>
               </div>
 
@@ -240,27 +235,26 @@ function GeoSearchContent() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Layers className="h-5 w-5 text-primary"/>
-                    <h3 className="font-semibold">Camadas de Dados</h3>
+                    <h3 className="font-semibold">Data Layers</h3>
                   </div>
                 </div>
                 <Select onValueChange={(value) => handleLayerChange(value as LayerType | 'none')} disabled={isEeLoading}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Selecione uma camada" />
+                    <SelectValue placeholder="Select a layer" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="none">Nenhuma</SelectItem>
-                    <SelectItem value="temperature">Temperatura</SelectItem>
-                    <SelectItem value="air_quality">Qualidade do Ar</SelectItem>
-                    <SelectItem value="precipitation">Precipitação</SelectItem>
-                    <SelectItem value="land_use">Uso do Solo</SelectItem>
-                    <SelectItem value="human_activity">Atividade Humana</SelectItem>
+                    <SelectItem value="none">None</SelectItem>
+                    <SelectItem value="temperature">Surface Temperature</SelectItem>
+                    <SelectItem value="air_quality">Air Quality (NO2)</SelectItem>
+                    <SelectItem value="land_use">Land Use</SelectItem>
+                    <SelectItem value="human_activity">Human Activity</SelectItem>
                   </SelectContent>
                 </Select>
-                {isEeLoading && <div className="flex items-center text-sm text-muted-foreground"><Loader2 className="mr-2 h-4 w-4 animate-spin" />Carregando...</div>}
+                {isEeLoading && <div className="flex items-center text-sm text-muted-foreground"><Loader2 className="mr-2 h-4 w-4 animate-spin" />Loading...</div>}
 
                 {eeTileUrl && (
                   <div className="space-y-3 pt-2">
-                    <Label htmlFor="opacity-slider">Opacidade</Label>
+                    <Label htmlFor="opacity-slider">Opacity</Label>
                     <Slider id="opacity-slider" min={0} max={1} step={0.1} value={[layerOpacity]} onValueChange={(v) => setLayerOpacity(v[0])} />
                   </div>
                 )}
@@ -269,7 +263,7 @@ function GeoSearchContent() {
               <Separator />
 
               <div className="flex flex-1 flex-col gap-2 overflow-y-hidden">
-                <h3 className="font-semibold">Localizações Salvas</h3>
+                <h3 className="font-semibold">Saved Locations</h3>
                 <ScrollArea className="flex-1">
                   <div className="space-y-2 pr-4">
                     {locations.length > 0 ? locations.map((loc) => (
@@ -279,13 +273,13 @@ function GeoSearchContent() {
                             <p className="font-semibold">{loc.name}</p>
                             <p className="text-sm text-muted-foreground">{loc.address}</p>
                           </div>
-                          <Button variant="ghost" size="icon" onClick={() => handleDelete(loc.id, loc.name)} aria-label={`Apagar ${loc.name}`}>
+                          <Button variant="ghost" size="icon" onClick={() => handleDelete(loc.id, loc.name)} aria-label={`Delete ${loc.name}`}>
                             <Trash2 className="h-4 w-4 text-destructive" />
                           </Button>
                         </div>
                       </Card>
                     )) : (
-                      <div className="text-center text-muted-foreground py-8">Nenhuma localização salva.</div>
+                      <div className="text-center text-muted-foreground py-8">No saved locations.</div>
                     )}
                   </div>
                 </ScrollArea>
@@ -294,7 +288,7 @@ function GeoSearchContent() {
           </Card>
         </aside>
         <main className="flex-1">
-          <Map center={position} zoom={zoom} onCameraChanged={handleCameraChange} mapId="DEMO_MAP_ID" className="h-full w-full" gestureHandling={'greedy'} zoomControl={true} fullscreenControl={false} streetViewControl={false} mapTypeControl={false}>
+          <Map center={position} zoom={zoom} onCameraChanged={handleCameraChange} mapId="DEMO_MAP_ID" className="h-full w-full" gestureHandling={'greedy'} zoomControl={false} streetViewControl={false} mapTypeControl={false}>
             {markerPosition && <AdvancedMarker position={markerPosition}><MapPin className="h-8 w-8 text-primary" /></AdvancedMarker>}
             {eeTileUrl && <EarthEngineLayer tileUrl={eeTileUrl} opacity={layerOpacity} />}
           </Map>
@@ -317,7 +311,7 @@ function PlaceAutocomplete({ onPlaceSelect, inputRef }: { onPlaceSelect: (place:
     return () => listener.remove();
   }, [places, inputRef, onPlaceSelect]);
 
-  return <div className="relative"><Input ref={inputRef} placeholder="Pesquisar um endereço" /></div>;
+  return <div className="relative"><Input ref={inputRef} placeholder="Search for an address" /></div>;
 }
 
 function EarthEngineLayer({ tileUrl, opacity }: { tileUrl: string, opacity: number }) {

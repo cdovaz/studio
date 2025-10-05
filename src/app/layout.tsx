@@ -3,7 +3,7 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 
 export const metadata: Metadata = {
-  title: 'GeoSearch App',
+  title: 'Polis',
   description: 'Search and save your favorite locations.',
 };
 
