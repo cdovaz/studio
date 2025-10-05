@@ -1,10 +1,7 @@
-import { getLocations } from '@/app/actions';
 import GeoSearchPage from '@/components/geosearch-page';
 
-export default async function Home() {
-  const locations = await getLocations();
-  
+export default function Home() {
   return (
-    <GeoSearchPage initialLocations={locations} />
+    <GeoSearchPage />
   );
 }
