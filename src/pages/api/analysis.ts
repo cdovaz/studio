@@ -35,6 +35,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       The analysis should focus on the following selected key indicators:
       - ${indicators.join('\n- ')}
 
+      We are 100% sure that the following statement is correct, use this to think in better solutions:If we increase the fraction of vegetation by 1%, the average surface temperature drops by 0.31%
+
       The plan must be structured in clear and concise sections. Present it as continuous text, without using markdown like extra line breaks, lists, or tables, only paragraphs.
       Start with an introductory paragraph about the area's potential. 
       Create an short, medium and long deadline projects for each parte o the plan
